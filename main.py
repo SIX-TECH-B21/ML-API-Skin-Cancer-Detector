@@ -34,7 +34,6 @@ def procPics(pics_path: str):
     result = model.predict(test_img)
     for res in result[0]:
         dataArr.append(decimal_str(res))
-    os.remove(pics_path)
     return dataArr
 
 # setup fastapi
@@ -45,10 +44,28 @@ app = FastAPI()
 async def getPost(req: Request):
 
     data = await req.json()
+    picsPath = ""
+    resData = []
 
-    the_path = getPics(data["url"])
-    resData = procPics(the_path)
+    # process for getting the picture
+    try:
+        picsPath = getPics(data["url"])
+    except:
+        return {
+            "err": "Can't get the picture from choosen url."
+        }
+    
+    # process for ml
+    try:
+        resData = procPics(picsPath)
+        os.remove(picsPath)
+    except:
+        os.remove(picsPath)
+        return {
+            "err": "Can't process the picture, the picture might be damaged."
+        }
 
+    # return the result
     return { "res": {
         "akiec": resData[0],
         "bcc": resData[1],
